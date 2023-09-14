@@ -782,113 +782,114 @@ let input = [
     "BFBFFFFRLL",
 ];
 
+// Create empty arrays to store parts of seat codes.
 let input2 = [];
 let input3 = [];
 
-for (i = 0; i < input.length; i++) {
-    input2.push(input[i].substring(0, 7));
-    input3.push(input[i].substring(7, 10));
+// Split seat codes into two parts: first 7 characters and last 3 characters.
+for (let i = 0; i < input.length; i++) {
+    input2.push(input[i].substring(0, 7)); // First 7 characters
+    input3.push(input[i].substring(7, 10)); // Last 3 characters
 }
+
+// Create empty arrays to store row and column values.
 let output1 = [];
 let output2 = [];
 
+// Process the first parts of seat codes to find row values.
 for (let i = 0; i < input2.length; i++) {
     let front = 0;
     let back = 127;
 
+    // Loop through each character of the first part.
     for (let j = 0; j < input2[i].length; j++) {
         if (input2[i][j] == 'F') {
+            // If it's 'F', take the lower half.
             back = Math.floor((front + back) / 2);
         } else {
+            // If it's 'B', take the upper half.
             front = Math.ceil((front + back) / 2);
         }
     }
-    output1.push(front);
+    output1.push(front); // Store the row value.
 }
 
+// Process the second parts of seat codes to find column values.
 for (let i = 0; i < input3.length; i++) {
     let left = 0;
     let right = 8;
 
+    // Loop through each character of the second part.
     for (let j = 0; j < input3[i].length; j++) {
         if (input3[i][j] == 'L') {
+            // If it's 'L', take the lower half.
             right = Math.floor((right + left) / 2);
         } else {
+            // If it's 'R', take the upper half.
             left = Math.ceil((right + left) / 2);
         }
     }
-    output2.push(left);
+    output2.push(left); // Store the column value.
 }
 
-let grid = [];
+// Calculate seat IDs based on row and column values.
+let seatIds = [];
 for (let i = 0; i < input.length; i++) {
-    grid.push(output1[i] * 8 + output2[i]);
+    seatIds.push(output1[i] * 8 + output2[i]);
 }
 
-let lowNum = grid[0];
-let highNum = grid[0];
+// Find the lowest and highest seat IDs.
+let lowestSeatId = Math.min(...seatIds);
+let highestSeatId = Math.max(...seatIds);
 
-grid.forEach((spot) => {
-    if (spot < lowNum) {
-        lowNum = spot;
+// Find the missing seat ID.
+let missingSeatId;
+
+// Sort seat IDs in ascending order.
+seatIds.sort((a, b) => a - b);
+
+// Iterate through the sorted seat IDs to find the missing one.
+for (let i = 0; i < seatIds.length - 1; i++) {
+    if (seatIds[i + 1] - seatIds[i] !== 1) {
+        missingSeatId = seatIds[i] + 1;
+        break;
     }
-    if (spot > highNum) {
-        highNum = spot;
-    }
-});
-
-let missing;
-
-grid.sort((a, b) => a - b);
-
-grid.every((num, index) => {
-    let nextNum = 51 + index;
-    if (num !== nextNum) {
-        missing = nextNum;
-        return false;
-    }
-    return true;
-});
-
-let findLetterCode = (spot) => {
-    let row = Math.floor(spot / 8);
-    let column = spot % 8;
-
-    let code = "";
-
-    for (let i = 6; i >= 0; i--) {
-        let bit = (row >> i) & 1;
-        code += (bit === 0 ? "B" : "F");
-    }
-
-    for (let i = 2; i >= 0; i--) {
-        let bit = (column >> i) & 1;
-        code += (bit === 0 ? "L" : "R");
-    }
-
-    return code;
-};
-
-let spot = 517;
-let letterCode = findLetterCode(spot);
-
-
-let rows = [];
-let cols = [];
-
-for (i = 0; i < grid.length; i++) {
-    let row = Math.floor(grid[i] / 8);
-    let col = grid[i] % 8;
-
-    rows.push(row);
-    cols.push(col);
 }
-let totalRow = rows.reduce((accumulator, currentNumber) => accumulator + currentNumber, 0);
-let totalCol = cols.reduce((accumulator, currentNumber) => accumulator + currentNumber, 0);
 
-let totalGrid = `${totalCol * totalRow}`.split("0").join("");
+// Function to convert a seat ID to a seat code.
+function getSeatCode(seatId) {
+    // Calculate row and column values.
+    let row = Math.floor(seatId / 8);
+    let column = seatId % 8;
 
-// console.logs answers
-let results = [lowNum, highNum, missing, letterCode, totalGrid].forEach(result => console.log(result));
+    // Initialize an empty seat code.
+    let seatCode = "";
 
+    // Convert row and column values to seat code.
+    for (let i = 0; i < 7; i++) {
+        seatCode += (row & (1 << (6 - i))) === 0 ? 'F' : 'B';
+    }
+    for (let i = 0; i < 3; i++) {
+        seatCode += (column & (1 << (2 - i))) === 0 ? 'L' : 'R';
+    }
 
+    return seatCode;
+}
+
+// Find the seat code for a specific seat ID (e.g., seat ID 517).
+let seatIdToFind = 517;
+let foundSeatCode = getSeatCode(seatIdToFind);
+
+// Calculate the total row and column values.
+let totalRowValue = output1.reduce((sum, value) => sum + value, 0);
+let totalColumnValue = output2.reduce((sum, value) => sum + value, 0);
+
+// Calculate the total grid value (product of total row and column values) and remove '0' characters.
+let totalGridValue = (totalRowValue * totalColumnValue).toString().replace(/0/g, '');
+
+// Output the results.
+console.log(lowestSeatId);
+console.log(highestSeatId);
+console.log(missingSeatId);
+console.log(foundSeatCode);
+console.log(totalGridValue);
